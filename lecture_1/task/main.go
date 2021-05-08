@@ -3,11 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/sethgrid/pester"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/sethgrid/pester"
 )
 
 type jobApplicationResult struct {
@@ -17,36 +20,39 @@ type jobApplicationResult struct {
 	Skills []string
 }
 
+func fetchHTTPResponse() (*http.Response, error) {
+	httpClient := pester.New()
+	return httpClient.Get(url)
+}
+
+func getResponseContent(response *http.Response) ([]byte, error) {
+	return ioutil.ReadAll(response.Body)
+}
+
 const url = "https://run.mocky.io/v3/f7ceece5-47ee-4955-b974-438982267dc8"
 
-func getPassedApplications(list []jobApplicationResult) map[string]struct{} {
-	f, err := os.Create("passed_Go_Java.txt")
-	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "opening a file"),
-		)
-	}
-
-	set := map[string]struct{}{}
+func filterPassedApplications(list []jobApplicationResult) []jobApplicationResult {
+	var filteredSlice []jobApplicationResult
 
 	for _, applicant := range list {
-		if applicant.Passed {
-			for _, skill := range applicant.Skills {
-				if skill == "Java" || skill == "Go" {
-					set[applicant.Name] = struct{}{}
-					f.WriteString(fmt.Sprint(applicant.Name) + "\n")
-					break
-				}
-			}
+		if applicant.Passed && containsSelectedSkills(applicant.Skills) {
+			filteredSlice = append(filteredSlice, applicant)
 		}
 	}
 
-	defer f.Close()
-	f.Sync()
-	return set
+	return filteredSlice
 }
 
-func getAllApplications(list []jobApplicationResult, passed map[string]struct{}) {
+func containsSelectedSkills(skillSlice []string) bool {
+	for _, skill := range skillSlice {
+		if skill == "Java" || skill == "Go" {
+			return true
+		}
+	}
+	return false
+}
+
+func writeToFile(passed []jobApplicationResult) {
 	f, err := os.Create("skills.txt")
 	if err != nil {
 		log.Fatal(
@@ -54,18 +60,9 @@ func getAllApplications(list []jobApplicationResult, passed map[string]struct{})
 		)
 	}
 
-	for _, applicant := range list {
-		_, found := passed[applicant.Name]
-		if found {
-			f.WriteString(fmt.Sprint(applicant.Name) + " - ")
-			for i, skill := range applicant.Skills {
-				if i+1 == len(applicant.Skills) {
-					f.WriteString(fmt.Sprint(skill) + "\n")
-				} else {
-					f.WriteString(fmt.Sprint(skill) + ", ")
-				}
-			}
-		}
+	for _, applicant := range passed {
+		toWrite := fmt.Sprintf("%v - %v\n", applicant.Name, strings.Join(applicant.Skills, ", "))
+		f.WriteString(toWrite)
 	}
 
 	defer f.Close()
@@ -73,32 +70,31 @@ func getAllApplications(list []jobApplicationResult, passed map[string]struct{})
 }
 
 func main() {
-	httpClient := pester.New()
 
-	httpResponse, err := httpClient.Get(url)
+	httpResponse, err := fetchHTTPResponse()
 	if err != nil {
 		log.Fatal(
-			errors.WithMessage(err, "HTTP get towards jobApplication API"),
+			errors.WithMessage(err, "fetching data"),
 		)
 	}
 
-	bodyContent, err := ioutil.ReadAll(httpResponse.Body)
+	bodyContent, err := getResponseContent(httpResponse)
 	if err != nil {
 		log.Fatal(
-			errors.WithMessage(err, "reading body of jobApplication API response"),
+			errors.WithMessage(err, "reading body of job application API response"),
 		)
 	}
 
-	var decodedContent []jobApplicationResult
-	err = json.Unmarshal(bodyContent, &decodedContent)
+	var applicationResults []jobApplicationResult
 
+	err = json.Unmarshal(bodyContent, &applicationResults)
 	if err != nil {
 		log.Fatal(
 			errors.WithMessage(err, "unmarshalling the JSON body content"),
 		)
 	}
 
-	passed := getPassedApplications(decodedContent)
+	filteredApplicants := filterPassedApplications(applicationResults)
 
-	getAllApplications(decodedContent, passed)
+	writeToFile(filteredApplicants)
 }
