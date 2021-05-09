@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strconv"
+	"log"
 	"strings"
+
+	"code-cadets-2021/homework_1/fizzBuzz"
 )
 
 func parseProgramArguments(start, end *int) {
@@ -14,25 +16,7 @@ func parseProgramArguments(start, end *int) {
 	flag.Parse()
 }
 
-func playFizzBuzz(start int, end int) []string {
-	var toPrint []string
-
-	for i := start; i <= end; i++ {
-
-		if i%3 == 0 {
-			toPrint = append(toPrint, "Fizz")
-		} else if i%5 == 0 {
-			toPrint = append(toPrint, "Buzz")
-		} else if i%15 == 0 {
-			toPrint = append(toPrint, "Fizz Buzz")
-		} else {
-			toPrint = append(toPrint, strconv.Itoa(i))
-		}
-	}
-	return toPrint
-}
-
-func print(slice []string) {
+func printResult(slice []string) {
 	fmt.Println(strings.Join(slice, " "))
 }
 
@@ -41,7 +25,10 @@ func main() {
 
 	parseProgramArguments(&start, &end)
 
-	sliceToPrint := playFizzBuzz(start, end)
+	sliceToPrint, err := fizzBuzz.PlayFizzBuzz(start, end)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	print(sliceToPrint)
+	printResult(sliceToPrint)
 }
