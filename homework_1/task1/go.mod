@@ -1,4 +1,4 @@
-module code-cadets-2021/homework_1
+module code-cadets-2021/homework_1/task1
 
 go 1.16
 

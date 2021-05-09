@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"code-cadets-2021/homework_1/fizzBuzz"
+	"code-cadets-2021/homework_1/task1/fizzBuzz"
 )
 
 func parseProgramArguments(start, end *int) {

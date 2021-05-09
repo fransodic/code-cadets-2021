@@ -6,7 +6,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"code-cadets-2021/homework_1/fizzBuzz"
+	"code-cadets-2021/homework_1/task1/fizzBuzz"
 )
 
 func TestPlayFizzBuzzGame(t *testing.T) {
