@@ -112,6 +112,6 @@ func main() {
 			errors.WithMessage(err, "unmarshalling the JSON body content"),
 		)
 	}
-	json := marshalPokemonStruct(pokemon, pokemonLocations)
-	printResults(json)
+	finalJson := marshalPokemonStruct(pokemon, pokemonLocations)
+	printResults(finalJson)
 }
