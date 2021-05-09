@@ -3,6 +3,7 @@ package main
 import (
 	"code-cadets-2021/homework_1/task2/TaxLibrary"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 )
 
@@ -22,7 +23,13 @@ func main() {
 
 func getFromStdin() float64 {
 	var income float64
+
 	fmt.Print("Unesite prihod: ")
-	fmt.Scanf("%f", &income)
+
+	_, err := fmt.Scanf("%f", &income)
+	if err != nil {
+		errors.New("trouble reading from stdin")
+	}
+
 	return income
 }
