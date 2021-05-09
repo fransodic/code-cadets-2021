@@ -1,30 +1,28 @@
 package main
 
 import (
-	"flag"
+	"code-cadets-2021/homework_1/task2/TaxLibrary"
 	"fmt"
 	"log"
-
-	"code-cadets-2021/homework_1/task2/TaxLibrary"
 )
 
-func parseProgramArguments(income *float64) {
-	flag.Float64Var(income, "income", 1, "Your income in $$")
-
-	flag.Parse()
-}
-
 func main() {
-	var income float64
 
-	parseProgramArguments(&income)
+	income := getFromStdin()
 
-	configuration := TaxLibrary.ConfigureTaxBrackets([]float64{0, 9075, 36900, 89350, 186350, 405100}, []int{0, 10, 15, 20, 25, 28, 33})
+	configuration, err := TaxLibrary.ConfigureTaxBrackets([]float64{0, 1000, 5000, 10000}, []int{0, 10, 20, 30})
 
 	tax, err := TaxLibrary.CalculateTax(income, configuration)
 	if err != nil {
 		log.Println(err)
+	} else {
+		fmt.Printf("Ukupni porez za %v HRK prihoda iznosi %v HRK.", income, tax)
 	}
+}
 
-	fmt.Println(tax)
+func getFromStdin() float64 {
+	var income float64
+	fmt.Print("Unesite prihod: ")
+	fmt.Scanf("%f", &income)
+	return income
 }
