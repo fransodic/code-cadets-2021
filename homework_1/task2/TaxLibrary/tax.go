@@ -14,8 +14,7 @@ type TaxBracketsConfiguration struct {
 // ConfigureTaxBrackets takes 2 arguments where the first one (brackets) represents
 // income intervals and the second (taxRates) tax percentage for chosen intervals. Value at
 // taxRates[i] is used in calculating as the taxRate for the following interval -> [brackets[i+1], brackets[i+2]].
-// It returns a TaxBracketsConfiguration struct which represents the configuration for the
-// calculation of progressive tax.
+// It returns a TaxBracketsConfiguration struct and any error encountered.
 func ConfigureTaxBrackets(brackets []float64, taxRates []int) (TaxBracketsConfiguration, error) {
 	var configuration TaxBracketsConfiguration
 
@@ -44,6 +43,14 @@ func CalculateTax(income float64, configuration TaxBracketsConfiguration) (float
 
 	if income < 0 {
 		return 0.0, errors.New("income cannot be lower than 0.0 HRK")
+	}
+
+	if len(configuration.Percentage) != len(configuration.Brackets) {
+		return 0.0, errors.New("wrong configuration, please use the configuration function")
+	}
+
+	if len(configuration.Percentage) == 0 || len(configuration.Brackets) == 0 {
+		return 0.0, errors.New("wrong configuration, please use the configuration function")
 	}
 
 	leftAmount := income
