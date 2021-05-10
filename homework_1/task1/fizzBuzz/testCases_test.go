@@ -62,5 +62,17 @@ func getTestCases() []testCase {
 
 			expectingError: true,
 		},
+		{
+			inputStart: 0,
+			inputEnd:   -10,
+
+			expectingError: true,
+		},
+		{
+			inputStart: 1,
+			inputEnd:   0,
+
+			expectingError: true,
+		},
 	}
 }

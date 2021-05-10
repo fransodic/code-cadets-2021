@@ -8,14 +8,16 @@ import (
 
 func PlayFizzBuzz(start int, end int) ([]string, error) {
 
+	if start <= 0 {
+		return nil, errors.New("start should be greater than 0")
+	}
+
+	if end <= 0 {
+		return nil, errors.New("end should be greater than 0")
+	}
+
 	if start > end {
 		return nil, errors.New("start is greater than end")
-	}
-	if start < 0 {
-		return nil, errors.New("start is negative")
-	}
-	if end < 0 {
-		return nil, errors.New("end is negative")
 	}
 
 	var toPrint []string
