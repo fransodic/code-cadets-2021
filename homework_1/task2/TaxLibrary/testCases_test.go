@@ -127,7 +127,7 @@ func getTestCases() []testCase {
 			expectedConfiguration: TaxLibrary.TaxBracketsConfiguration{},
 			expectedOutput:        0.0,
 			expectingConfError:    true,
-			expectingCalcError:    false,
+			expectingCalcError:    true,
 		},
 	}
 }

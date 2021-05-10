@@ -9,17 +9,18 @@ import (
 	"code-cadets-2021/homework_1/task2/TaxLibrary"
 )
 
-func TestTaxCalculation(t *testing.T) {
+func TestTaxConfiguration(t *testing.T) {
 
 	for idx, tc := range getTestCases() {
 		Convey(fmt.Sprintf("Given test case #%v: %+v", idx, tc), t, func() {
-			actualOutput, actualErr := TaxLibrary.CalculateTax(tc.income, tc.expectedConfiguration)
 
-			if tc.expectingCalcError {
+			actualConfiguration, actualErr := TaxLibrary.ConfigureTaxBrackets(tc.brackets, tc.percentages)
+
+			if tc.expectingConfError {
 				So(actualErr, ShouldNotBeNil)
 			} else {
 				So(actualErr, ShouldBeNil)
-				So(actualOutput, ShouldResemble, tc.expectedOutput)
+				So(actualConfiguration, ShouldResemble, tc.expectedConfiguration)
 			}
 
 		})
