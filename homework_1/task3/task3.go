@@ -69,6 +69,7 @@ func marshalPokemonStruct(pokemon string, locations []pokemonEncounters) pokemon
 	for _, locationArea := range locations {
 		resultPokemon.Location = append(resultPokemon.Location, locationArea.Location_area.Name)
 	}
+
 	return resultPokemon
 }
 
