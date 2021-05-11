@@ -16,8 +16,7 @@ func main() {
 		)
 	}
 
-	//configuration := buildConfiguration([]float64{0, 1000, 5000, 10000}, []float64{0.0, 0.10, 0.20, 0.30})
-	configuration := buildConfiguration([]float64{2000, 3000}, []float64{0.10, 0.20})
+	configuration := buildConfiguration([]float64{0, 1000, 5000, 10000}, []float64{0.0, 0.10, 0.20, 0.30})
 
 	tax, err := taxes.CalculateTax(income, configuration)
 	if err != nil {
