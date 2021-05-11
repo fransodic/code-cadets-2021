@@ -13,14 +13,14 @@ import (
 )
 
 type pokemonAPIResponse struct {
-	Name                     string
-	Location_area_encounters string
+	Name                   string
+	LocationAreaEncounters string `json:"location_area_encounters"`
 }
 
 type pokemonEncounters struct {
-	Location_area struct {
+	LocationArea struct {
 		Name string
-	}
+	} `json:"location_area"`
 }
 
 type pokemonStruct struct {
@@ -29,7 +29,7 @@ type pokemonStruct struct {
 }
 
 func parseProgramArguments(pokemon *string) {
-	flag.StringVar(pokemon, "pokemon", "1", "desired pokemon's name or number")
+	flag.StringVar(pokemon, "pokemon", "", "desired pokemon's name or number")
 
 	flag.Parse()
 }
@@ -43,23 +43,19 @@ func getResponseContent(response *http.Response) ([]byte, error) {
 	return ioutil.ReadAll(response.Body)
 }
 
-func getDataFromURL(url string) []byte {
+func getDataFromURL(url string) ([]byte, error) {
 
 	httpResponse, err := fetchHTTPResponse(url)
 	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "fetching data from pokemon API"),
-		)
+		return nil, errors.WithMessage(err, "fetching data from pokemon API")
 	}
 
 	bodyContent, err := getResponseContent(httpResponse)
 	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "reading body of pokemon API response"),
-		)
+		return nil, errors.WithMessage(err, "reading body of pokemon API response")
 	}
 
-	return bodyContent
+	return bodyContent, nil
 }
 
 func marshalPokemonStruct(pokemon string, locations []pokemonEncounters) pokemonStruct {
@@ -67,7 +63,7 @@ func marshalPokemonStruct(pokemon string, locations []pokemonEncounters) pokemon
 
 	resultPokemon.Name = pokemon
 	for _, locationArea := range locations {
-		resultPokemon.Location = append(resultPokemon.Location, locationArea.Location_area.Name)
+		resultPokemon.Location = append(resultPokemon.Location, locationArea.LocationArea.Name)
 	}
 
 	return resultPokemon
@@ -94,9 +90,18 @@ func main() {
 
 	parseProgramArguments(&pokemon)
 
-	bodyContent := getDataFromURL(url + pokemon)
+	if len(pokemon) == 0 {
+		log.Fatal(
+			errors.New("pokemon not specified"),
+		)
+	}
 
-	err := json.Unmarshal(bodyContent, &pokemonResult)
+	bodyContent, err := getDataFromURL(url + pokemon)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(bodyContent, &pokemonResult)
 	if err != nil {
 		log.Fatal(
 			errors.WithMessage(err, "unmarshalling the JSON body content"),
@@ -105,13 +110,16 @@ func main() {
 
 	pokemon = pokemonResult.Name
 
-	bodyContent = getDataFromURL(pokemonResult.Location_area_encounters)
+	bodyContent, err = getDataFromURL(pokemonResult.LocationAreaEncounters)
+	if err != nil {
+		log.Fatal(
+			errors.WithMessage(err, "fetching data from pokemon API"),
+		)
+	}
 
 	err = json.Unmarshal(bodyContent, &pokemonLocations)
 	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "unmarshalling the JSON body content"),
-		)
+		log.Fatal(err)
 	}
 	finalJson := marshalPokemonStruct(pokemon, pokemonLocations)
 	printResults(finalJson)

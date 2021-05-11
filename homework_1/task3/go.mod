@@ -1,4 +1,4 @@
-module "task3"
+module "code-cadets-2021/homework_1/task3"
 
 go 1.16
 
