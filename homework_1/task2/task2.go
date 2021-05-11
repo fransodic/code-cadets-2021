@@ -1,7 +1,7 @@
 package main
 
 import (
-	"code-cadets-2021/homework_1/task2/TaxLibrary"
+	"code-cadets-2021/homework_1/task2/taxes"
 	"fmt"
 	"github.com/pkg/errors"
 	"log"
@@ -16,22 +16,32 @@ func main() {
 		)
 	}
 
-	configuration, err := TaxLibrary.ConfigureTaxBrackets([]float64{0, 1000, 5000, 10000}, []int{0, 10, 20, 30})
-	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "trouble configuring the tax brackets"),
-		)
-	}
+	//configuration := buildConfiguration([]float64{0, 1000, 5000, 10000}, []float64{0.0, 0.10, 0.20, 0.30})
+	configuration := buildConfiguration([]float64{2000, 3000}, []float64{0.10, 0.20})
 
-	tax, err := TaxLibrary.CalculateTax(income, configuration)
+	tax, err := taxes.CalculateTax(income, configuration)
 	if err != nil {
 		log.Fatal(
 			errors.WithMessage(err, "trouble calculating tax"),
 		)
 	}
 
-	fmt.Printf("Ukupni porez za %v HRK prihoda iznosi %v HRK.", income, tax)
+	fmt.Printf("Ukupni porez za vrijednost %v iznosi %v.", income, tax)
 
+}
+
+func buildConfiguration(thresholds []float64, percentages []float64) []taxes.TaxBracket {
+	var configuration []taxes.TaxBracket
+
+	for i := 0; i < len(thresholds); i++ {
+		taxBracket := taxes.TaxBracket{
+			Threshold:  thresholds[i],
+			Percentage: percentages[i],
+		}
+		configuration = append(configuration, taxBracket)
+	}
+
+	return configuration
 }
 
 func getFromStdin() (float64, error) {
