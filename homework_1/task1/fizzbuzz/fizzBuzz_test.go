@@ -1,4 +1,4 @@
-package fizzBuzz_test
+package fizzbuzz_test
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"code-cadets-2021/homework_1/task1/fizzBuzz"
+	"code-cadets-2021/homework_1/task1/fizzbuzz"
 )
 
 func TestPlayFizzBuzzGame(t *testing.T) {
@@ -14,7 +14,7 @@ func TestPlayFizzBuzzGame(t *testing.T) {
 	for idx, tc := range getTestCases() {
 		Convey(fmt.Sprintf("Given test case #%v: %+v", idx, tc), t, func() {
 
-			actualOutput, actualErr := fizzBuzz.PlayFizzBuzz(tc.inputStart, tc.inputEnd)
+			actualOutput, actualErr := fizzbuzz.PlayFizzBuzz(tc.inputStart, tc.inputEnd)
 
 			if tc.expectingError {
 				So(actualErr, ShouldNotBeNil)

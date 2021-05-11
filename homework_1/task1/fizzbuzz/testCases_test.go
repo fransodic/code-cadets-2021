@@ -1,4 +1,4 @@
-package fizzBuzz_test
+package fizzbuzz_test
 
 type testCase struct {
 	inputStart int

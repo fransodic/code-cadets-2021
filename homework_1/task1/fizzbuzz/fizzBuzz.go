@@ -1,4 +1,4 @@
-package fizzBuzz
+package fizzbuzz
 
 import (
 	"strconv"
@@ -20,19 +20,19 @@ func PlayFizzBuzz(start int, end int) ([]string, error) {
 		return nil, errors.New("start is greater than end")
 	}
 
-	var toPrint []string
+	var fizzBuzzOutput []string
 
 	for i := start; i <= end; i++ {
 
 		if i%15 == 0 {
-			toPrint = append(toPrint, "FizzBuzz")
+			fizzBuzzOutput = append(fizzBuzzOutput, "FizzBuzz")
 		} else if i%5 == 0 {
-			toPrint = append(toPrint, "Buzz")
+			fizzBuzzOutput = append(fizzBuzzOutput, "Buzz")
 		} else if i%3 == 0 {
-			toPrint = append(toPrint, "Fizz")
+			fizzBuzzOutput = append(fizzBuzzOutput, "Fizz")
 		} else {
-			toPrint = append(toPrint, strconv.Itoa(i))
+			fizzBuzzOutput = append(fizzBuzzOutput, strconv.Itoa(i))
 		}
 	}
-	return toPrint, nil
+	return fizzBuzzOutput, nil
 }
