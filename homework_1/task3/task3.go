@@ -69,15 +69,14 @@ func marshalPokemonStruct(pokemon string, locations []pokemonEncounters) pokemon
 	return resultPokemon
 }
 
-func printResults(pokemon pokemonStruct) {
+func printResults(pokemon pokemonStruct) error {
 	jsonToPrint, err := json.Marshal(pokemon)
 	if err != nil {
-		log.Fatal(
-			errors.WithMessage(err, "marshaling the result structure"),
-		)
+		return errors.New("marshaling the result structure")
 	}
 
 	fmt.Println(string(jsonToPrint))
+	return nil
 }
 
 const url = "https://pokeapi.co/api/v2/pokemon/"
@@ -122,5 +121,9 @@ func main() {
 		log.Fatal(err)
 	}
 	finalJson := marshalPokemonStruct(pokemon, pokemonLocations)
-	printResults(finalJson)
+
+	err = printResults(finalJson)
+	if err != nil {
+		log.Fatal(errors.WithMessage(err, "error while printing results"))
+	}
 }
