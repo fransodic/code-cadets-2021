@@ -34,6 +34,21 @@ func (o *OrderedQueue) Start(ctx context.Context) error {
 	//
 	// finally:
 	// - store queue slice to disk
+
+	err := o.loadFromFile()
+	if err != nil {
+		return err
+	}
+
+	for odd := range o.source {
+		o.queue = append(o.queue, odd)
+	}
+
+	err = o.storeToFile()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

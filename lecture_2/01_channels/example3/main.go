@@ -29,7 +29,7 @@ func main() {
 		ch <- i
 	}
 
-	// close(ch)
+	close(ch)
 
 	// range iteration
 	for x := range ch {
@@ -49,7 +49,8 @@ func main() {
 	v1, ok1 := <-ch2
 	fmt.Println(v1, ok1)
 
-	// close(ch2)
+	// uvijek jedan close za jedan kanal
+	close(ch2)
 
 	v2, ok2 := <-ch2
 	fmt.Println(v2, ok2)
@@ -60,5 +61,5 @@ func main() {
 	v4, ok4 := <-ch2
 	fmt.Println(v4, ok4)
 
-	// close(ch2)
+	//close(ch2)
 }
