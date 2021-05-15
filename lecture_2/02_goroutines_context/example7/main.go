@@ -9,13 +9,13 @@ func main() {
 	ch1 <- 1
 	ch1 <- 2
 	ch1 <- 3
-	// close(ch1)
+	close(ch1)
 
 	ch2 := make(chan string, 3)
 	ch2 <- "a"
 	ch2 <- "b"
 	ch2 <- "c"
-	// close(ch2)
+	close(ch2)
 
 	for {
 		select {

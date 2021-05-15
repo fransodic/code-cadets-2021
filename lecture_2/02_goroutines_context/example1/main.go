@@ -15,6 +15,7 @@ func main() {
 	wg.Add(size)
 
 	for i := 0; i < size; i++ {
+		// uvijek paziti na argumente/varijable
 		go func(a int) {
 			// this subtracts "1" from wait group
 			defer wg.Done()
