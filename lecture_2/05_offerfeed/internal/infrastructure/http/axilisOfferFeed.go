@@ -35,15 +35,19 @@ func (a *AxilisOfferFeed) Start(ctx context.Context) error {
 	for {
 		content, err := a.getOddsFromServer()
 		if err != nil {
+			//fmt.Println("http err")
 			return err
 		}
 
 		select {
 		case <-ctx.Done():
 			close(a.updates)
+			//fmt.Println("feed finish")
 			return nil
-		case <-time.After(time.Second * 3):
+		case <-time.After(time.Second):
+			//fmt.Println("prosla sekunda")
 			for _, odd := range content {
+				//fmt.Println("pisem odd")
 				a.writeToUpdatesChannel(odd)
 			}
 		}
@@ -77,8 +81,12 @@ func (a *AxilisOfferFeed) writeToUpdatesChannel(odd axilisOfferOdd) {
 		Name:        odd.Name,
 		Match:       odd.Name,
 		Coefficient: odd.Details.Price,
-		Timestamp:   time.Time{},
+		Timestamp:   time.Now(),
 	}
+}
+
+func (a *AxilisOfferFeed) String() string {
+	return "axilis offer feed"
 }
 
 func (a *AxilisOfferFeed) GetUpdates() chan models.Odd {
