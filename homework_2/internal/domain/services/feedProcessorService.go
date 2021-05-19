@@ -39,15 +39,18 @@ func (f *FeedProcessorService) Start(ctx context.Context) error {
 	for {
 		select {
 		case odd := <-upChan1:
-			odd.Coefficient = odd.Coefficient * 2
-			srcChan <- odd
+			updateCoefficient(odd, srcChan)
 		case odd := <-upChan2:
-			odd.Coefficient = odd.Coefficient * 2
-			srcChan <- odd
+			updateCoefficient(odd, srcChan)
 		case <-ctx.Done():
 			return nil
 		}
 	}
+}
+
+func updateCoefficient(odd models.Odd, srcChan chan models.Odd) {
+	odd.Coefficient = odd.Coefficient * 2
+	srcChan <- odd
 }
 
 func (f *FeedProcessorService) String() string {
