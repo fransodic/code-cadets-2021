@@ -16,9 +16,7 @@ type AxilisOfferFeed struct {
 	updates    chan models.Odd
 }
 
-func NewAxilisOfferFeed(
-	httpClient http.Client,
-) *AxilisOfferFeed {
+func NewAxilisOfferFeed(httpClient http.Client) *AxilisOfferFeed {
 	return &AxilisOfferFeed{
 		httpClient: httpClient,
 		updates:    make(chan models.Odd),

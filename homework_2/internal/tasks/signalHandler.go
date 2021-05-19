@@ -27,3 +27,7 @@ func (s *SignalHandler) Start(ctx context.Context) error {
 
 	return nil
 }
+
+func (s *SignalHandler) String() string {
+	return "signal handler"
+}

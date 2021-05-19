@@ -6,11 +6,11 @@ import (
 )
 
 type FeedProcessorService struct {
-	feed  Feed
+	feed  []Feed
 	queue Queue
 }
 
-func NewFeedProcessorService(orderedQueue Queue, feed Feed) *FeedProcessorService {
+func NewFeedProcessorService(orderedQueue Queue, feed ...Feed) *FeedProcessorService {
 	return &FeedProcessorService{
 		feed:  feed,
 		queue: orderedQueue,
@@ -31,17 +31,23 @@ func (f *FeedProcessorService) Start(ctx context.Context) error {
 	// - when updates channel is closed, exit
 	// - when exiting, close source channel
 
-	upChan := f.feed.GetUpdates()
+	upChan1 := f.feed[0].GetUpdates()
+	upChan2 := f.feed[1].GetUpdates()
 	srcChan := f.queue.GetSource()
 	defer close(srcChan)
 
-	for odd := range upChan {
-		//fmt.Printf("stari koef %g\n",  odd.Coefficient)
-		odd.Coefficient = odd.Coefficient * 2.0
-		//fmt.Printf("novi koef %g\n",  odd.Coefficient)
-		srcChan <- odd
+	for {
+		select {
+		case odd := <-upChan1:
+			odd.Coefficient = odd.Coefficient * 2
+			srcChan <- odd
+		case odd := <-upChan2:
+			odd.Coefficient = odd.Coefficient * 2
+			srcChan <- odd
+		case <-ctx.Done():
+			return nil
+		}
 	}
-	return nil
 }
 
 func (f *FeedProcessorService) String() string {
