@@ -112,5 +112,7 @@ func Engine(rabbitMqChannel rabbitmq.Channel, dbExecutor sqlite.DatabaseExecutor
 	betPublisher := newBetPublisher(rabbitMqChannel)
 	publisher := newPublisher(betPublisher)
 
+	// treba stvorit kalkulator valjda i predat u sljedecu funkciju
+
 	return engine.New(consumer, handler, publisher)
 }
