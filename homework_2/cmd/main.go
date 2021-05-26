@@ -10,12 +10,16 @@ func main() {
 
 	signalHandler := bootstrap.NewSignalHandler()
 
-	feed := bootstrap.NewAxilisOfferFeed()
-	feedCSV := bootstrap.NewAxilisOfferFeedCSV()
-	queue := bootstrap.NewOrderedQueue()
-	processingService := bootstrap.NewFeedProcessorService(queue, feed, feedCSV)
+	client := bootstrap.NewHttpClient()
 
-	tasks.RunTasks(signalHandler, feedCSV, feed, queue, processingService)
+	feedJSON := bootstrap.NewAxilisOfferFeedJSON(*client)
+	feedCSV := bootstrap.NewAxilisOfferFeedCSV(*client)
+	feed := bootstrap.NewFeedMerger(feedJSON, feedCSV)
+
+	queue := bootstrap.NewOrderedQueue()
+	processingService := bootstrap.NewFeedProcessorService(queue, feed)
+
+	tasks.RunTasks(signalHandler, feedJSON, feedCSV, feed, queue, processingService)
 
 	fmt.Println("program finished gracefully")
 }

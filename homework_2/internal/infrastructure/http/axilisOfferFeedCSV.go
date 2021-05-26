@@ -39,13 +39,13 @@ func (a *AxilisOfferFeedCSV) Start(ctx context.Context) error {
 		}
 
 		select {
-		case <-ctx.Done():
-			close(a.updates)
-			return nil
 		case <-time.After(time.Second):
 			for _, odd := range content {
 				a.writeToUpdatesChannel(odd)
 			}
+		case <-ctx.Done():
+			close(a.updates)
+			return nil
 		}
 	}
 }

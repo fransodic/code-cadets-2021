@@ -11,19 +11,19 @@ import (
 
 const axilisFeedURL = "http://18.193.121.232/axilis-feed"
 
-type AxilisOfferFeed struct {
+type AxilisOfferFeedJSON struct {
 	httpClient http.Client
 	updates    chan models.Odd
 }
 
-func NewAxilisOfferFeed(httpClient http.Client) *AxilisOfferFeed {
-	return &AxilisOfferFeed{
+func NewAxilisOfferFeedJSON(httpClient http.Client) *AxilisOfferFeedJSON {
+	return &AxilisOfferFeedJSON{
 		httpClient: httpClient,
 		updates:    make(chan models.Odd),
 	}
 }
 
-func (a *AxilisOfferFeed) Start(ctx context.Context) error {
+func (a *AxilisOfferFeedJSON) Start(ctx context.Context) error {
 	// repeatedly:
 	// - get odds from HTTP server
 	// - write them to updates channel
@@ -52,7 +52,7 @@ func (a *AxilisOfferFeed) Start(ctx context.Context) error {
 	}
 }
 
-func (a *AxilisOfferFeed) getOddsFromServer() ([]axilisOfferOdd, error) {
+func (a *AxilisOfferFeedJSON) getOddsFromServer() ([]axilisOfferOdd, error) {
 
 	res, err := a.httpClient.Get(axilisFeedURL)
 	if err != nil {
@@ -73,7 +73,7 @@ func (a *AxilisOfferFeed) getOddsFromServer() ([]axilisOfferOdd, error) {
 	return decodedContent, nil
 }
 
-func (a *AxilisOfferFeed) writeToUpdatesChannel(odd axilisOfferOdd) {
+func (a *AxilisOfferFeedJSON) writeToUpdatesChannel(odd axilisOfferOdd) {
 	a.updates <- models.Odd{
 		Id:          odd.Id,
 		Name:        odd.Name,
@@ -83,11 +83,11 @@ func (a *AxilisOfferFeed) writeToUpdatesChannel(odd axilisOfferOdd) {
 	}
 }
 
-func (a *AxilisOfferFeed) String() string {
+func (a *AxilisOfferFeedJSON) String() string {
 	return "axilis offer feed"
 }
 
-func (a *AxilisOfferFeed) GetUpdates() chan models.Odd {
+func (a *AxilisOfferFeedJSON) GetUpdates() chan models.Odd {
 	return a.updates
 }
 
