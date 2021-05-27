@@ -68,7 +68,7 @@ func (h *Handler) HandleEventUpdates(
 			log.Println("Processing event update, betId:", eventUpdate.Id)
 
 			// Fetch the domain bet.
-			domainBet, exists, err := h.betRepository.GetBetByID(ctx, eventUpdate.Id)
+			domainBets, exists, err := h.betRepository.GetBySelectionID(ctx, eventUpdate.Id)
 			if err != nil {
 				log.Println("Failed to fetch a bet which relates to this event update, error: ", err)
 				continue
@@ -79,26 +79,30 @@ func (h *Handler) HandleEventUpdates(
 			}
 
 			// Calculate payout based on event update.
-			var resultingBet rabbitmqmodels.BetCalculated
-			if eventUpdate.Outcome == "won" {
-				resultingBet = rabbitmqmodels.BetCalculated{
-					Id:     domainBet.Id,
-					Status: eventUpdate.Outcome,
-					Payout: domainBet.SelectionCoefficient * domainBet.Payment,
+
+			for _, domainBet := range domainBets {
+				var resultingBet rabbitmqmodels.BetCalculated
+				if eventUpdate.Outcome == "won" {
+					resultingBet = rabbitmqmodels.BetCalculated{
+						Id:     domainBet.Id,
+						Status: eventUpdate.Outcome,
+						Payout: domainBet.SelectionCoefficient * domainBet.Payment,
+					}
+				} else {
+					resultingBet = rabbitmqmodels.BetCalculated{
+						Id:     domainBet.Id,
+						Status: eventUpdate.Outcome,
+						Payout: 0 * domainBet.Payment,
+					}
 				}
-			} else {
-				resultingBet = rabbitmqmodels.BetCalculated{
-					Id:     domainBet.Id,
-					Status: eventUpdate.Outcome,
-					Payout: 0 * domainBet.Payment,
+
+				select {
+				case resultingBets <- resultingBet:
+				case <-ctx.Done():
+					return
 				}
 			}
 
-			select {
-			case resultingBets <- resultingBet:
-			case <-ctx.Done():
-				return
-			}
 		}
 	}()
 

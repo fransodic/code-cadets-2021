@@ -71,44 +71,52 @@ func (r *BetRepository) queryUpdateBet(ctx context.Context, bet storagemodels.Be
 	return err
 }
 
-// GetBetByID fetches a bet from the database and returns it. The second returned value indicates
+// GetBySelectionID fetches a bet from the database and returns it. The second returned value indicates
 // whether the bet exists in DB. If the bet does not exist, an error will not be returned.
-func (r *BetRepository) GetBetByID(ctx context.Context, id string) (domainmodels.BetCalculated, bool, error) {
-	storageBet, err := r.queryGetBetByID(ctx, id)
+func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.BetCalculated, bool, error) {
+	storageBets, err := r.queryGetBetsBySelectionID(ctx, id)
 	if err == sql.ErrNoRows {
-		return domainmodels.BetCalculated{}, false, nil
+		return []domainmodels.BetCalculated{}, false, nil
 	}
 	if err != nil {
-		return domainmodels.BetCalculated{}, false, errors.Wrap(err, "bet repository failed to get a bet with id "+id)
+		return []domainmodels.BetCalculated{}, false, errors.Wrap(err, "bet repository failed to get bets with selection id "+id)
 	}
 
-	domainBet := r.betMapper.MapStorageBetToDomainBet(storageBet)
-	return domainBet, true, nil
+	var domainBets []domainmodels.BetCalculated
+	for _, storageBet := range storageBets {
+		domainBet := r.betMapper.MapStorageBetToDomainBet(storageBet)
+		domainBets = append(domainBets, domainBet)
+	}
+
+	return domainBets, true, nil
 }
 
-func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storagemodels.BetCalculated, error) {
-	row, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE id='"+id+"';")
+func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string) ([]storagemodels.BetCalculated, error) {
+	rows, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE id='"+id+"';")
 	if err != nil {
-		return storagemodels.BetCalculated{}, err
+		return []storagemodels.BetCalculated{}, err
 	}
-	defer row.Close()
+	defer rows.Close()
 
-	// This will move to the "next" result (which is the only result, because a single bet is fetched).
-	row.Next()
+	var results []storagemodels.BetCalculated
+	// This will move to the "next" result and iterate through all rows.
+	for rows.Next() {
+		var selectionId string
+		var selectionCoefficient int
+		var payment int
 
-	var selectionId string
-	var selectionCoefficient int
-	var payment int
+		err = rows.Scan(&id, &selectionId, &selectionCoefficient, &payment)
+		if err != nil {
+			return []storagemodels.BetCalculated{}, err
+		}
 
-	err = row.Scan(&id, &selectionId, &selectionCoefficient, &payment)
-	if err != nil {
-		return storagemodels.BetCalculated{}, err
+		results = append(results, storagemodels.BetCalculated{
+			Id:                   id,
+			SelectionId:          selectionId,
+			SelectionCoefficient: selectionCoefficient,
+			Payment:              payment,
+		})
 	}
 
-	return storagemodels.BetCalculated{
-		Id:                   id,
-		SelectionId:          selectionId,
-		SelectionCoefficient: selectionCoefficient,
-		Payment:              payment,
-	}, nil
+	return results, nil
 }
