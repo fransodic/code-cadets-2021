@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/pkg/errors"
 
@@ -71,9 +72,49 @@ func (r *BetRepository) queryUpdateBet(ctx context.Context, bet storagemodels.Be
 	return err
 }
 
+func (r *BetRepository) GetByID(ctx context.Context, id string) (storagemodels.BetCalculated, bool, error) {
+	storageBet, err := r.queryGetBetByID(ctx, id)
+	if err == sql.ErrNoRows {
+		return storagemodels.BetCalculated{}, false, nil
+	}
+	if err != nil {
+		return storagemodels.BetCalculated{}, false, errors.Wrap(err, "bet repository failed to get bet with id "+id)
+	}
+
+	return storageBet, true, nil
+}
+
+func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storagemodels.BetCalculated, error) {
+	row, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE id='"+id+"';")
+	if err != nil {
+		return storagemodels.BetCalculated{}, err
+	}
+	defer row.Close()
+
+	// next and only result (id is unique)
+	row.Next()
+
+	var selectionId string
+	var selectionCoefficient int
+	var payment int
+
+	err = row.Scan(&id, &selectionId, &selectionCoefficient, &payment)
+	if err != nil {
+		return storagemodels.BetCalculated{}, err
+	}
+
+	return storagemodels.BetCalculated{
+		Id:                   id,
+		SelectionId:          selectionId,
+		SelectionCoefficient: selectionCoefficient,
+		Payment:              payment,
+	}, nil
+}
+
 // GetBySelectionID fetches a bet from the database and returns it. The second returned value indicates
 // whether the bet exists in DB. If the bet does not exist, an error will not be returned.
 func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.BetCalculated, bool, error) {
+	log.Println("Fetching by selection id " + id)
 	storageBets, err := r.queryGetBetsBySelectionID(ctx, id)
 	if err == sql.ErrNoRows {
 		return []domainmodels.BetCalculated{}, false, nil
@@ -92,7 +133,9 @@ func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]doma
 }
 
 func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string) ([]storagemodels.BetCalculated, error) {
-	rows, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE id='"+id+"';")
+	log.Println("Querying for selection id " + id)
+	rows, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE selection_id='"+id+"';")
+
 	if err != nil {
 		return []storagemodels.BetCalculated{}, err
 	}
@@ -101,6 +144,7 @@ func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string
 	var results []storagemodels.BetCalculated
 	// This will move to the "next" result and iterate through all rows.
 	for rows.Next() {
+		log.Println("In rows for loop")
 		var selectionId string
 		var selectionCoefficient int
 		var payment int

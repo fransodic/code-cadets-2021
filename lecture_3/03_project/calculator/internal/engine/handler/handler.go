@@ -41,13 +41,15 @@ func (h *Handler) HandleBets(
 				Payment:              bet.Payment,
 			}
 
-			// Insert the domain bet into the repository.
-			err := h.betRepository.InsertBet(ctx, domainBet)
-			if err != nil {
-				log.Println("Failed to insert bet, error: ", err)
-				continue
+			_, exists, _ := h.betRepository.GetByID(ctx, domainBet.Id)
+			if !exists {
+				// Insert the domain bet into the repository.
+				err := h.betRepository.InsertBet(ctx, domainBet)
+				if err != nil {
+					log.Println("Failed to insert bet, error: ", err)
+					continue
+				}
 			}
-
 		}
 	}()
 
@@ -65,7 +67,7 @@ func (h *Handler) HandleEventUpdates(
 		defer close(resultingBets)
 
 		for eventUpdate := range eventUpdates {
-			log.Println("Processing event update, betId:", eventUpdate.Id)
+			log.Println("Processing event update, selectionId:", eventUpdate.Id)
 
 			// Fetch the domain bet.
 			domainBets, exists, err := h.betRepository.GetBySelectionID(ctx, eventUpdate.Id)
@@ -74,7 +76,7 @@ func (h *Handler) HandleEventUpdates(
 				continue
 			}
 			if !exists {
-				log.Println("A bet which should be calculated does not exist, betId: ", eventUpdate.Id)
+				log.Println("A bet which should be calculated does not exist, selctionId: ", eventUpdate.Id)
 				continue
 			}
 
@@ -83,12 +85,14 @@ func (h *Handler) HandleEventUpdates(
 			for _, domainBet := range domainBets {
 				var resultingBet rabbitmqmodels.BetCalculated
 				if eventUpdate.Outcome == "won" {
+					log.Println("Evo jedan won ID: " + domainBet.Id)
 					resultingBet = rabbitmqmodels.BetCalculated{
 						Id:     domainBet.Id,
 						Status: eventUpdate.Outcome,
 						Payout: domainBet.SelectionCoefficient * domainBet.Payment,
 					}
 				} else {
+					log.Println("Evo jedan lost ID: " + domainBet.Id)
 					resultingBet = rabbitmqmodels.BetCalculated{
 						Id:     domainBet.Id,
 						Status: eventUpdate.Outcome,
