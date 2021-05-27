@@ -35,13 +35,19 @@ func (f *FeedProcessorService) Start(ctx context.Context) error {
 	srcChan := f.queue.GetSource()
 	defer close(srcChan)
 
-	for odd := range upChan {
-		//fmt.Printf("stari koef %g\n",  odd.Coefficient)
-		odd.Coefficient = odd.Coefficient * 2.0
-		//fmt.Printf("novi koef %g\n",  odd.Coefficient)
-		srcChan <- odd
+	for {
+		select {
+		case odd := <-upChan:
+			updateCoefficient(odd, srcChan)
+		case <-ctx.Done():
+			return nil
+		}
 	}
-	return nil
+}
+
+func updateCoefficient(odd models.Odd, srcChan chan models.Odd) {
+	odd.Coefficient = odd.Coefficient * 2
+	srcChan <- odd
 }
 
 func (f *FeedProcessorService) String() string {
