@@ -3,8 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"log"
-
 	"github.com/pkg/errors"
 
 	domainmodels "code-cadets-2021/lecture_3/03_project/calculator/internal/domain/models"
@@ -114,7 +112,6 @@ func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storage
 // GetBySelectionID fetches a bet from the database and returns it. The second returned value indicates
 // whether the bet exists in DB. If the bet does not exist, an error will not be returned.
 func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.BetCalculated, bool, error) {
-	log.Println("Fetching by selection id " + id)
 	storageBets, err := r.queryGetBetsBySelectionID(ctx, id)
 	if err == sql.ErrNoRows {
 		return []domainmodels.BetCalculated{}, false, nil
@@ -133,7 +130,6 @@ func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]doma
 }
 
 func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string) ([]storagemodels.BetCalculated, error) {
-	log.Println("Querying for selection id " + id)
 	rows, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE selection_id='"+id+"';")
 
 	if err != nil {
@@ -144,7 +140,6 @@ func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string
 	var results []storagemodels.BetCalculated
 	// This will move to the "next" result and iterate through all rows.
 	for rows.Next() {
-		log.Println("In rows for loop")
 		var selectionId string
 		var selectionCoefficient int
 		var payment int
