@@ -62,7 +62,7 @@ We are building a simple betting platform. You can find further information in t
     - Name: "Run Controller"
     - Run kind: "Package"
     - Package path: "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/controller/cmd"
-    - Working directory (replace with your path!): "/Users/oreskd/Axilis/code-cadets/2021/code-cadets-2021/lecture_3/temp"
+    - Working directory (replace with your path!): "/Users/oreskd/Axilis/code-cadets/2021/code-cadets-2021/lecture_3/03_project/controller"
     - under "EnvFile" check "Enable EnvFile" and click "+" under the table (which currently contains only one entry)
     - choose `.env` file from `controller/` directory (note: the file may be hidden, you need to show hidden files in that case)
     
