@@ -5,8 +5,8 @@ import (
 	"log"
 )
 
-// Engine is the main component, responsible for consuming received bets and calculated bets,
-// processing them and publishing the resulting bets.
+// Engine is the main component, responsible for consuming bets and event updates,
+// processing them and publishing the calculated bets.
 type Engine struct {
 	consumer  Consumer
 	handler   Handler
@@ -26,13 +26,13 @@ func New(consumer Consumer, handler Handler, publisher Publisher) *Engine {
 func (e *Engine) Start(ctx context.Context) {
 	err := e.processBets(ctx)
 	if err != nil {
-		log.Println("Engine failed to process bets received:", err)
+		log.Println("Engine failed to process bets:", err)
 		return
 	}
 
 	err = e.processEventUpdates(ctx)
 	if err != nil {
-		log.Println("Engine failed to process bets calculated:", err)
+		log.Println("Engine failed to process event updates:", err)
 		return
 	}
 

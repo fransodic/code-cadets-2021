@@ -25,7 +25,7 @@ func NewBetRepository(dbExecutor DatabaseExecutor, betMapper BetMapper) *BetRepo
 
 // InsertBet inserts the provided bet into the database. An error is returned if the operation
 // has failed.
-func (r *BetRepository) InsertBet(ctx context.Context, bet domainmodels.BetCalculated) error {
+func (r *BetRepository) InsertBet(ctx context.Context, bet domainmodels.Bet) error {
 	storageBet := r.betMapper.MapDomainBetToStorageBet(bet)
 	err := r.queryInsertBet(ctx, storageBet)
 	if err != nil {
@@ -49,7 +49,7 @@ func (r *BetRepository) queryInsertBet(ctx context.Context, bet storagemodels.Be
 
 // UpdateBet updates the provided bet in the database. An error is returned if the operation
 // has failed.
-func (r *BetRepository) UpdateBet(ctx context.Context, bet domainmodels.BetCalculated) error {
+func (r *BetRepository) UpdateBet(ctx context.Context, bet domainmodels.Bet) error {
 	storageBet := r.betMapper.MapDomainBetToStorageBet(bet)
 	err := r.queryUpdateBet(ctx, storageBet)
 	if err != nil {
@@ -111,22 +111,22 @@ func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storage
 
 // GetBySelectionID fetches a bet from the database and returns it. The second returned value indicates
 // whether the bet exists in DB. If the bet does not exist, an error will not be returned.
-func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.BetCalculated, bool, error) {
+func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.Bet, error) {
 	storageBets, err := r.queryGetBetsBySelectionID(ctx, id)
 	if err == sql.ErrNoRows {
-		return []domainmodels.BetCalculated{}, false, nil
+		return []domainmodels.Bet{}, nil
 	}
 	if err != nil {
-		return []domainmodels.BetCalculated{}, false, errors.Wrap(err, "bet repository failed to get bets with selection id "+id)
+		return []domainmodels.Bet{}, errors.Wrap(err, "bet repository failed to get bets with selection id "+id)
 	}
 
-	var domainBets []domainmodels.BetCalculated
+	var domainBets []domainmodels.Bet
 	for _, storageBet := range storageBets {
 		domainBet := r.betMapper.MapStorageBetToDomainBet(storageBet)
 		domainBets = append(domainBets, domainBet)
 	}
 
-	return domainBets, true, nil
+	return domainBets, nil
 }
 
 func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string) ([]storagemodels.BetCalculated, error) {

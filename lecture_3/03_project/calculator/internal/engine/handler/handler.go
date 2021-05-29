@@ -34,19 +34,29 @@ func (h *Handler) HandleBets(
 			log.Println("Processing bet, betId:", bet.Id)
 
 			// Calculate the domain bet based on the incoming bet received.
-			domainBet := domainmodels.BetCalculated{
+			domainBet := domainmodels.Bet{
 				Id:                   bet.Id,
 				SelectionId:          bet.SelectionId,
 				SelectionCoefficient: bet.SelectionCoefficient,
 				Payment:              bet.Payment,
 			}
 
-			_, exists, _ := h.betRepository.GetByID(ctx, domainBet.Id)
+			_, exists, err := h.betRepository.GetByID(ctx, domainBet.Id)
+			if err != nil {
+				log.Println("Failed to get bet, error: ", err)
+			}
+
 			if !exists {
 				// Insert the domain bet into the repository.
 				err := h.betRepository.InsertBet(ctx, domainBet)
 				if err != nil {
 					log.Println("Failed to insert bet, error: ", err)
+					continue
+				}
+			} else {
+				err := h.betRepository.UpdateBet(ctx, domainBet)
+				if err != nil {
+					log.Println("Failed to update bet, error: ", err)
 					continue
 				}
 			}
@@ -60,7 +70,7 @@ func (h *Handler) HandleBets(
 func (h *Handler) HandleEventUpdates(
 	ctx context.Context,
 	eventUpdates <-chan rabbitmqmodels.EventUpdate,
-) <-chan rabbitmqmodels.BetCalculated {
+) {
 	resultingBets := make(chan rabbitmqmodels.BetCalculated)
 
 	go func() {
@@ -70,13 +80,13 @@ func (h *Handler) HandleEventUpdates(
 			log.Println("Processing event update, selectionId:", eventUpdate.Id)
 
 			// Fetch the domain bet.
-			domainBets, exists, err := h.betRepository.GetBySelectionID(ctx, eventUpdate.Id)
+			domainBets, err := h.betRepository.GetBySelectionID(ctx, eventUpdate.Id)
 			if err != nil {
 				log.Println("Failed to fetch a bet which relates to this event update, error: ", err)
 				continue
 			}
-			if !exists {
-				log.Println("A bet which should be calculated does not exist, selctionId: ", eventUpdate.Id)
+			if len(domainBets) == 0 {
+				log.Println("No bets found for this event, selectionId: ", eventUpdate.Id)
 				continue
 			}
 
@@ -107,6 +117,4 @@ func (h *Handler) HandleEventUpdates(
 
 		}
 	}()
-
-	return resultingBets
 }

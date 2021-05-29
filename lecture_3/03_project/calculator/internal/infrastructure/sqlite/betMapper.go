@@ -6,6 +6,6 @@ import (
 )
 
 type BetMapper interface {
-	MapDomainBetToStorageBet(domainBet domainmodels.BetCalculated) storagemodels.BetCalculated
-	MapStorageBetToDomainBet(storageBet storagemodels.BetCalculated) domainmodels.BetCalculated
+	MapDomainBetToStorageBet(domainBet domainmodels.Bet) storagemodels.BetCalculated
+	MapStorageBetToDomainBet(storageBet storagemodels.BetCalculated) domainmodels.Bet
 }
