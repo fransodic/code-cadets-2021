@@ -22,7 +22,7 @@ func NewController(eventUpdateValidator EventUpdateValidator, eventService Event
 	}
 }
 
-// UpdateEvent handlers update event equest.
+// UpdateEvent handlers update event request.
 func (e *Controller) UpdateEvent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var eventUpdateRequestDto models.EventUpdateRequestDto
