@@ -27,6 +27,7 @@ func (c *Controller) GetBetByID() gin.HandlerFunc {
 		if !isValidID(id) {
 			log.Println("Invalid id")
 			ctx.Status(http.StatusBadRequest)
+			return
 		}
 
 		resultBet, exists, err := c.betService.GetByID(ctx, id)
@@ -83,6 +84,7 @@ func (c *Controller) GetBetsByCustomerID() gin.HandlerFunc {
 		customerId := ctx.Param("id")
 		if !isValidID(customerId) {
 			ctx.Status(http.StatusBadRequest)
+			return
 		}
 
 		resultBets, err := c.betService.GetBetsByCustomerID(ctx, customerId)
