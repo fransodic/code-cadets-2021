@@ -36,14 +36,25 @@ func main() {
 
 	eventUpdates := generateRandomOutcomes(events)
 
+	err = postEventUpdates(httpClient, eventUpdates)
+	if err != nil {
+		log.Fatalln("error sending event updates: ", err)
+	}
+
+}
+
+func postEventUpdates(httpClient stdhttp.Client, eventUpdates []EventUpdateDto) error {
 	for _, eventUpdate := range eventUpdates {
 		requestBody, err := json.Marshal(eventUpdate)
 		post, err := httpClient.Post(eventUpdateEndpoint, "text/plain", bytes.NewBuffer(requestBody))
 		if err != nil {
-			log.Fatalln("error sending event updates: ", err)
+			return errors.Wrap(err, "error posting event update, id: "+eventUpdate.Id)
 		}
+		log.Println("Response status for event " + eventUpdate.Id + " is " + post.Status)
 		post.Body.Close()
 	}
+
+	return nil
 }
 
 func generateRandomOutcomes(events map[string]struct{}) []EventUpdateDto {
@@ -51,10 +62,10 @@ func generateRandomOutcomes(events map[string]struct{}) []EventUpdateDto {
 	rand.Seed(time.Now().Unix())
 
 	var eventUpdates []EventUpdateDto
-	for event, _ := range events {
+	for event := range events {
 		eventUpdates = append(eventUpdates, EventUpdateDto{
-			id:      event,
-			outcome: outcomes[rand.Intn(len(outcomes))],
+			Id:      event,
+			Outcome: outcomes[rand.Intn(len(outcomes))],
 		})
 	}
 
@@ -62,7 +73,7 @@ func generateRandomOutcomes(events map[string]struct{}) []EventUpdateDto {
 }
 
 func getDistinctEvents(data []Bet) map[string]struct{} {
-	var events map[string]struct{}
+	events := make(map[string]struct{})
 	for _, bet := range data {
 		events[bet.SelectionId] = struct{}{}
 	}
@@ -90,6 +101,6 @@ func getActiveOdds(httpClient stdhttp.Client) ([]Bet, error) {
 }
 
 type EventUpdateDto struct {
-	id      string
-	outcome string
+	Id      string
+	Outcome string
 }

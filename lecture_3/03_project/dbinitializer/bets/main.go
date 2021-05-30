@@ -36,7 +36,7 @@ func createBetsTable(db *sql.DB) {
 		"selection_id" TEXT NOT NULL,
 		"selection_coefficient" INTEGER NOT NULL,
 		"payment" INTEGER NOT NULL,
-		"payout" INTEGER
+		"payout" INTEGER DEFAULT 0
 	  );`
 
 	log.Println("Creating bets table...")
