@@ -19,9 +19,9 @@ func NewBetAcceptanceValidator(coeffUpperBound, paymentLowerBound, paymentUpperB
 }
 
 // BetAcceptanceIsValid checks if received bet is valid.
-// Id is not empty
-// Coefficient is lower than given upper bound
-// Payment is between given upper and lower bound
+// Id is non-default
+// Coefficient is non-default and lower than given upper bound
+// Payment is non-default and between given upper and lower bound
 func (b *BetAcceptanceValidator) BetAcceptanceIsValid(betAcceptanceRequestDto models.BetAcceptanceRequestDto) bool {
 	if b.isValidCustomerID(betAcceptanceRequestDto.CustomerId) && b.isValidPayment(betAcceptanceRequestDto.Payment) && b.isValidCoefficient(betAcceptanceRequestDto.SelectionCoefficient) {
 		return true
@@ -31,11 +31,11 @@ func (b *BetAcceptanceValidator) BetAcceptanceIsValid(betAcceptanceRequestDto mo
 }
 
 func (b *BetAcceptanceValidator) isValidCoefficient(coefficient float64) bool {
-	return coefficient <= b.coefficientUpperBound
+	return coefficient != float64(0) && coefficient <= b.coefficientUpperBound
 }
 
 func (b *BetAcceptanceValidator) isValidPayment(payment float64) bool {
-	return payment >= b.paymentLowerBound && payment <= b.paymentUpperBound
+	return payment != float64(0) && payment >= b.paymentLowerBound && payment <= b.paymentUpperBound
 }
 
 func (b *BetAcceptanceValidator) isValidCustomerID(id string) bool {

@@ -2,7 +2,11 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	uuid "github.com/nu7hatch/gouuid"
+	"github.com/pkg/errors"
 	"log"
+	"math/rand"
+	"time"
 
 	"code-cadets-2021/homework_4/bet_acceptance_api/internal/infrastructure/rabbitmq/models"
 	"github.com/streadway/amqp"
@@ -38,7 +42,15 @@ func NewEventUpdatePublisher(
 
 // Publish publishes an event update message to the queue.
 func (p *BetReceivedPublisher) Publish(customerId, selectionId string, selectionCoefficient, payment float64) error {
+	rand.Seed(time.Now().UnixNano())
+
+	id, err := getRandomUUID()
+	if err != nil {
+		return errors.Wrap(err, "failed to generate a random UUID")
+	}
+
 	betReceived := &models.BetReceivedDto{
+		Id:                   id,
 		CustomerId:           customerId,
 		SelectionId:          selectionId,
 		SelectionCoefficient: selectionCoefficient,
@@ -66,4 +78,12 @@ func (p *BetReceivedPublisher) Publish(customerId, selectionId string, selection
 
 	log.Printf("Sent %s", eventUpdateJson)
 	return nil
+}
+
+func getRandomUUID() (string, error) {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+	return id.String(), nil
 }
