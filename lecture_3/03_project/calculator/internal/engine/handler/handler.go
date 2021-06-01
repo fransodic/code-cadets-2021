@@ -24,11 +24,8 @@ func New(betRepository BetRepository) *Handler {
 func (h *Handler) HandleBets(
 	ctx context.Context,
 	bets <-chan rabbitmqmodels.Bet,
-) <-chan rabbitmqmodels.BetCalculated {
-	resultingBets := make(chan rabbitmqmodels.BetCalculated)
-
+) {
 	go func() {
-		defer close(resultingBets)
 
 		for bet := range bets {
 			log.Println("Processing bet, betId:", bet.Id)
@@ -48,6 +45,7 @@ func (h *Handler) HandleBets(
 
 			if !exists {
 				// Insert the domain bet into the repository.
+				log.Println("Bet does not exist, inserting bet : ", domainBet.Id)
 				err := h.betRepository.InsertBet(ctx, domainBet)
 				if err != nil {
 					log.Println("Failed to insert bet, error: ", err)
@@ -62,15 +60,13 @@ func (h *Handler) HandleBets(
 			}
 		}
 	}()
-
-	return resultingBets
 }
 
 // HandleEventUpdates handles event updates.
 func (h *Handler) HandleEventUpdates(
 	ctx context.Context,
 	eventUpdates <-chan rabbitmqmodels.EventUpdate,
-) {
+) <-chan rabbitmqmodels.BetCalculated {
 	resultingBets := make(chan rabbitmqmodels.BetCalculated)
 
 	go func() {
@@ -117,4 +113,6 @@ func (h *Handler) HandleEventUpdates(
 
 		}
 	}()
+
+	return resultingBets
 }
