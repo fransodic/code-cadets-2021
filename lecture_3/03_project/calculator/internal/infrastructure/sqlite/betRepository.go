@@ -3,14 +3,13 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-
 	"github.com/pkg/errors"
 
-	domainmodels "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/domain/models"
-	storagemodels "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/sqlite/models"
+	domainmodels "code-cadets-2021/lecture_3/03_project/calculator/internal/domain/models"
+	storagemodels "code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/sqlite/models"
 )
 
-// BetRepository provides methods that operate on cals_bets SQLite database.
+// BetRepository provides methods that operate on bets SQLite database.
 type BetRepository struct {
 	dbExecutor DatabaseExecutor
 	betMapper  BetMapper
@@ -35,7 +34,9 @@ func (r *BetRepository) InsertBet(ctx context.Context, bet domainmodels.Bet) err
 	return nil
 }
 
-func (r *BetRepository) queryInsertBet(ctx context.Context, bet storagemodels.Bet) error {
+func (r *BetRepository) queryInsertBet(ctx context.Context, bet storagemodels.BetCalculated) error {
+	// always insert
+
 	insertBetSQL := "INSERT INTO bets(id, selection_id, selection_coefficient, payment) VALUES (?, ?, ?, ?)"
 	statement, err := r.dbExecutor.PrepareContext(ctx, insertBetSQL)
 	if err != nil {
@@ -46,7 +47,8 @@ func (r *BetRepository) queryInsertBet(ctx context.Context, bet storagemodels.Be
 	return err
 }
 
-// UpdateBet updates the provided bet in the database. An error is returned if the operation has failed.
+// UpdateBet updates the provided bet in the database. An error is returned if the operation
+// has failed.
 func (r *BetRepository) UpdateBet(ctx context.Context, bet domainmodels.Bet) error {
 	storageBet := r.betMapper.MapDomainBetToStorageBet(bet)
 	err := r.queryUpdateBet(ctx, storageBet)
@@ -56,7 +58,7 @@ func (r *BetRepository) UpdateBet(ctx context.Context, bet domainmodels.Bet) err
 	return nil
 }
 
-func (r *BetRepository) queryUpdateBet(ctx context.Context, bet storagemodels.Bet) error {
+func (r *BetRepository) queryUpdateBet(ctx context.Context, bet storagemodels.BetCalculated) error {
 	updateBetSQL := "UPDATE bets SET selection_id=?, selection_coefficient=?, payment=? WHERE id=?"
 
 	statement, err := r.dbExecutor.PrepareContext(ctx, updateBetSQL)
@@ -68,32 +70,27 @@ func (r *BetRepository) queryUpdateBet(ctx context.Context, bet storagemodels.Be
 	return err
 }
 
-// GetBetByID fetches a bet from the database and returns it. The second returned value indicates
-// whether the bet exists in DB. If the bet does not exist, an error will not be returned.
-func (r *BetRepository) GetBetByID(ctx context.Context, id string) (domainmodels.Bet, bool, error) {
+func (r *BetRepository) GetByID(ctx context.Context, id string) (storagemodels.BetCalculated, bool, error) {
 	storageBet, err := r.queryGetBetByID(ctx, id)
 	if err == sql.ErrNoRows {
-		return domainmodels.Bet{}, false, nil
+		return storagemodels.BetCalculated{}, false, nil
 	}
 	if err != nil {
-		return domainmodels.Bet{}, false, errors.Wrap(err, "bet repository failed to get a bet with id "+id)
+		return storagemodels.BetCalculated{}, false, errors.Wrap(err, "bet repository failed to get bet with id "+id)
 	}
 
-	domainBet := r.betMapper.MapStorageBetToDomainBet(storageBet)
-	return domainBet, true, nil
+	return storageBet, true, nil
 }
 
-func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storagemodels.Bet, error) {
+func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storagemodels.BetCalculated, error) {
 	row, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE id='"+id+"';")
 	if err != nil {
-		return storagemodels.Bet{}, err
+		return storagemodels.BetCalculated{}, err
 	}
 	defer row.Close()
 
-	// This will move to the "next" result (which is the only result, because a single bet is fetched).
-	if !row.Next() {
-		return storagemodels.Bet{}, sql.ErrNoRows
-	}
+	// next and only result (id is unique)
+	row.Next()
 
 	var selectionId string
 	var selectionCoefficient int
@@ -101,10 +98,10 @@ func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storage
 
 	err = row.Scan(&id, &selectionId, &selectionCoefficient, &payment)
 	if err != nil {
-		return storagemodels.Bet{}, err
+		return storagemodels.BetCalculated{}, err
 	}
 
-	return storagemodels.Bet{
+	return storagemodels.BetCalculated{
 		Id:                   id,
 		SelectionId:          selectionId,
 		SelectionCoefficient: selectionCoefficient,
@@ -112,47 +109,47 @@ func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storage
 	}, nil
 }
 
-// GetBetsBySelectionID fetches all bets from the database that have provided selectionId
-// and returns them. The second returned value indicates whether the bet exists in DB.
-// If the bet does not exist, an error will not be returned.
-func (r *BetRepository) GetBetsBySelectionID(ctx context.Context, selectionId string) ([]domainmodels.Bet, error) {
-	storageBets, err := r.queryGetBetBySelectionID(ctx, selectionId)
+// GetBySelectionID fetches a bet from the database and returns it. The second returned value indicates
+// whether the bet exists in DB. If the bet does not exist, an error will not be returned.
+func (r *BetRepository) GetBySelectionID(ctx context.Context, id string) ([]domainmodels.Bet, error) {
+	storageBets, err := r.queryGetBetsBySelectionID(ctx, id)
 	if err == sql.ErrNoRows {
 		return []domainmodels.Bet{}, nil
 	}
 	if err != nil {
-		return []domainmodels.Bet{}, errors.Wrap(err, "bets repository failed to get a bet with selection id "+selectionId)
+		return []domainmodels.Bet{}, errors.Wrap(err, "bet repository failed to get bets with selection id "+id)
 	}
 
 	var domainBets []domainmodels.Bet
 	for _, storageBet := range storageBets {
-		domainBets = append(domainBets, r.betMapper.MapStorageBetToDomainBet(storageBet))
+		domainBet := r.betMapper.MapStorageBetToDomainBet(storageBet)
+		domainBets = append(domainBets, domainBet)
 	}
 
 	return domainBets, nil
 }
 
-func (r *BetRepository) queryGetBetBySelectionID(ctx context.Context, selectionId string) ([]storagemodels.Bet, error) {
-	row, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE selection_id='"+selectionId+"';")
+func (r *BetRepository) queryGetBetsBySelectionID(ctx context.Context, id string) ([]storagemodels.BetCalculated, error) {
+	rows, err := r.dbExecutor.QueryContext(ctx, "SELECT * FROM bets WHERE selection_id='"+id+"';")
+
 	if err != nil {
-		return []storagemodels.Bet{}, err
+		return []storagemodels.BetCalculated{}, err
 	}
-	defer row.Close()
+	defer rows.Close()
 
-	var bets []storagemodels.Bet
-
-	// A loop over all returned rows.
-	for row.Next() {
-		var id string
+	var results []storagemodels.BetCalculated
+	// This will move to the "next" result and iterate through all rows.
+	for rows.Next() {
+		var selectionId string
 		var selectionCoefficient int
 		var payment int
 
-		err = row.Scan(&id, &selectionId, &selectionCoefficient, &payment)
+		err = rows.Scan(&id, &selectionId, &selectionCoefficient, &payment)
 		if err != nil {
-			return []storagemodels.Bet{}, err
+			return []storagemodels.BetCalculated{}, err
 		}
 
-		bets = append(bets, storagemodels.Bet{
+		results = append(results, storagemodels.BetCalculated{
 			Id:                   id,
 			SelectionId:          selectionId,
 			SelectionCoefficient: selectionCoefficient,
@@ -160,5 +157,5 @@ func (r *BetRepository) queryGetBetBySelectionID(ctx context.Context, selectionI
 		})
 	}
 
-	return bets, nil
+	return results, nil
 }

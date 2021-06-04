@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	domainmodels "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/domain/models"
-	rabbitmqmodels "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
+	domainmodels "code-cadets-2021/lecture_3/03_project/calculator/internal/domain/models"
+	rabbitmqmodels "code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
 )
 
 // Handler handles bets and event updates.
@@ -24,46 +24,35 @@ func New(betRepository BetRepository) *Handler {
 func (h *Handler) HandleBets(
 	ctx context.Context,
 	bets <-chan rabbitmqmodels.Bet,
-) <-chan rabbitmqmodels.BetCalculated {
-	resultingBets := make(chan rabbitmqmodels.BetCalculated)
-
+) {
 	go func() {
-		defer close(resultingBets)
 
 		for bet := range bets {
 			log.Println("Processing bet, betId:", bet.Id)
 
-			// Fetch the domain bet.
-			domainBet, exists, err := h.betRepository.GetBetByID(ctx, bet.Id)
-			if err != nil {
-				log.Println("Failed to fetch a bet, error: ", err)
-				continue
+			// Calculate the domain bet based on the incoming bet received.
+			domainBet := domainmodels.Bet{
+				Id:                   bet.Id,
+				SelectionId:          bet.SelectionId,
+				SelectionCoefficient: bet.SelectionCoefficient,
+				Payment:              bet.Payment,
 			}
 
-			// Insert the bet if it does not already exist.
-			if !exists {
-				// Calculate the bet based on the incoming bet.
-				domainBet = domainmodels.Bet{
-					Id:                   bet.Id,
-					SelectionId:          bet.SelectionId,
-					SelectionCoefficient: bet.SelectionCoefficient,
-					Payment:              bet.Payment,
-				}
+			_, exists, err := h.betRepository.GetByID(ctx, domainBet.Id)
+			if err != nil {
+				log.Println("Failed to get bet, error: ", err)
+			}
 
-				// Insert the bet into the repository.
+			if !exists {
+				// Insert the domain bet into the repository.
+				log.Println("Bet does not exist, inserting bet : ", domainBet.Id)
 				err := h.betRepository.InsertBet(ctx, domainBet)
 				if err != nil {
 					log.Println("Failed to insert bet, error: ", err)
 					continue
 				}
 			} else {
-				// Update the domain bet based on incoming changes.
-				domainBet.SelectionId = bet.SelectionId
-				domainBet.SelectionCoefficient = bet.SelectionCoefficient
-				domainBet.Payment = bet.Payment
-
-				// Update the domain bet into the repository.
-				err = h.betRepository.UpdateBet(ctx, domainBet)
+				err := h.betRepository.UpdateBet(ctx, domainBet)
 				if err != nil {
 					log.Println("Failed to update bet, error: ", err)
 					continue
@@ -71,8 +60,6 @@ func (h *Handler) HandleBets(
 			}
 		}
 	}()
-
-	return resultingBets
 }
 
 // HandleEventUpdates handles event updates.
@@ -88,38 +75,34 @@ func (h *Handler) HandleEventUpdates(
 		for eventUpdate := range eventUpdates {
 			log.Println("Processing event update, selectionId:", eventUpdate.Id)
 
-			// Fetch all domain bets with this selectionID.
-			domainBets, err := h.betRepository.GetBetsBySelectionID(ctx, eventUpdate.Id)
+			// Fetch the domain bet.
+			domainBets, err := h.betRepository.GetBySelectionID(ctx, eventUpdate.Id)
 			if err != nil {
-				log.Println("Failed to fetch bets, error: ", err)
+				log.Println("Failed to fetch a bet which relates to this event update, error: ", err)
 				continue
 			}
 			if len(domainBets) == 0 {
-				log.Println("There are no bets with selectionId: ", eventUpdate.Id)
+				log.Println("No bets found for this event, selectionId: ", eventUpdate.Id)
 				continue
 			}
 
+			// Calculate payout based on event update.
+
 			for _, domainBet := range domainBets {
 				var resultingBet rabbitmqmodels.BetCalculated
-
-				// Calculate the resulting bet, which should be published.
 				if eventUpdate.Outcome == "won" {
 					resultingBet = rabbitmqmodels.BetCalculated{
 						Id:     domainBet.Id,
 						Status: eventUpdate.Outcome,
-						Payout: domainBet.Payment * domainBet.SelectionCoefficient,
+						Payout: domainBet.SelectionCoefficient * domainBet.Payment,
 					}
-				} else if eventUpdate.Outcome == "lost" {
+				} else {
 					resultingBet = rabbitmqmodels.BetCalculated{
 						Id:     domainBet.Id,
 						Status: eventUpdate.Outcome,
-						Payout: 0,
+						Payout: 0 * domainBet.Payment,
 					}
-				} else {
-					log.Printf("Unknown outcome on the following event update: %s", eventUpdate)
 				}
-
-				log.Printf("%v\n", resultingBet)
 
 				select {
 				case resultingBets <- resultingBet:
@@ -127,6 +110,7 @@ func (h *Handler) HandleEventUpdates(
 					return
 				}
 			}
+
 		}
 	}()
 

@@ -1,16 +1,14 @@
 package rabbitmq
 
 import (
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
 	"context"
 	"encoding/json"
-	"log"
-
 	"github.com/pkg/errors"
-
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
+	"log"
 )
 
-// BetConsumer consumes bets from the desired RabbitMQ queue.
+// BetConsumer consumes received bets from the desired RabbitMQ queue.
 type BetConsumer struct {
 	channel Channel
 	config  ConsumerConfig
@@ -27,7 +25,7 @@ func NewBetConsumer(channel Channel, config ConsumerConfig) (*BetConsumer, error
 		config.DeclareArgs,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "bet consumer initialization failed")
+		return nil, errors.Wrap(err, "bet received consumer initialization failed")
 	}
 
 	return &BetConsumer{
@@ -49,7 +47,7 @@ func (c *BetConsumer) Consume(ctx context.Context) (<-chan models.Bet, error) {
 		c.config.Args,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "bet consumer failed to consume messages")
+		return nil, errors.Wrap(err, "bet received consumer failed to consume messages")
 	}
 
 	bets := make(chan models.Bet)

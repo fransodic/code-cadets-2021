@@ -6,7 +6,7 @@ import (
 )
 
 // Engine is the main component, responsible for consuming bets and event updates,
-// calculating payout amounts and publishing them.
+// processing them and publishing the calculated bets.
 type Engine struct {
 	consumer  Consumer
 	handler   Handler
@@ -40,23 +40,23 @@ func (e *Engine) Start(ctx context.Context) {
 }
 
 func (e *Engine) processBets(ctx context.Context) error {
-	consumedBets, err := e.consumer.ConsumeBets(ctx)
+	consumedBetsReceived, err := e.consumer.ConsumeBets(ctx)
 	if err != nil {
 		return err
 	}
 
-	e.handler.HandleBets(ctx, consumedBets)
+	e.handler.HandleBets(ctx, consumedBetsReceived)
 
 	return nil
 }
 
 func (e *Engine) processEventUpdates(ctx context.Context) error {
-	consumedEventUpdates, err := e.consumer.ConsumeEventUpdates(ctx)
+	consumedBetsCalculated, err := e.consumer.ConsumeEventUpdates(ctx)
 	if err != nil {
 		return err
 	}
 
-	resultingBets := e.handler.HandleEventUpdates(ctx, consumedEventUpdates)
+	resultingBets := e.handler.HandleEventUpdates(ctx, consumedBetsCalculated)
 	e.publisher.PublishBetsCalculated(ctx, resultingBets)
 
 	return nil

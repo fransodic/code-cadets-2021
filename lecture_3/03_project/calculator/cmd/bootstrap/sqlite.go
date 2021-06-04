@@ -3,9 +3,8 @@ package bootstrap
 import (
 	"database/sql"
 
+	"code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
 	_ "github.com/mattn/go-sqlite3"
-
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
 )
 
 func Sqlite() *sql.DB {

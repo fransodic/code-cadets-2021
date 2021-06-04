@@ -1,6 +1,6 @@
-module github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator
+module code-cadets-2021/lecture_3/03_project/calculator
 
-go 1.14
+go 1.16
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0

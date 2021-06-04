@@ -1,14 +1,14 @@
 package bootstrap
 
 import (
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/domain/mappers"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/engine"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/engine/consumer"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/engine/handler"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/engine/publisher"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/sqlite"
+	"code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/domain/mappers"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/engine"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/engine/consumer"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/engine/handler"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/engine/publisher"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/sqlite"
 )
 
 func newBetConsumer(channel rabbitmq.Channel) *rabbitmq.BetConsumer {
@@ -59,10 +59,7 @@ func newEventUpdateConsumer(channel rabbitmq.Channel) *rabbitmq.EventUpdateConsu
 	return eventUpdateConsumer
 }
 
-func newConsumer(
-	betConsumer consumer.BetConsumer,
-	eventUpdateConsumer consumer.EventUpdateConsumer,
-) *consumer.Consumer {
+func newConsumer(betConsumer consumer.BetConsumer, eventUpdateConsumer consumer.EventUpdateConsumer) *consumer.Consumer {
 	return consumer.New(betConsumer, eventUpdateConsumer)
 }
 
@@ -79,7 +76,7 @@ func newHandler(betRepository handler.BetRepository) *handler.Handler {
 }
 
 func newBetCalculatedPublisher(channel rabbitmq.Channel) *rabbitmq.BetCalculatedPublisher {
-	betPublisher, err := rabbitmq.NewBetCalculatedPublisher(
+	betCalculatedPublisher, err := rabbitmq.NewBetCalculatedPublisher(
 		channel,
 		rabbitmq.PublisherConfig{
 			Queue:             config.Cfg.Rabbit.PublisherBetCalculatedQueue,
@@ -96,24 +93,24 @@ func newBetCalculatedPublisher(channel rabbitmq.Channel) *rabbitmq.BetCalculated
 	if err != nil {
 		panic(err)
 	}
-	return betPublisher
+	return betCalculatedPublisher
 }
 
-func newPublisher(betPublisher publisher.BetCalculatedPublisher) *publisher.Publisher {
-	return publisher.New(betPublisher)
+func newPublisher(betCalculatedPublisher publisher.BetCalculatedPublisher) *publisher.Publisher {
+	return publisher.New(betCalculatedPublisher)
 }
 
 func Engine(rabbitMqChannel rabbitmq.Channel, dbExecutor sqlite.DatabaseExecutor) *engine.Engine {
-	betReceivedConsumer := newBetConsumer(rabbitMqChannel)
-	betCalculatedConsumer := newEventUpdateConsumer(rabbitMqChannel)
-	consumer := newConsumer(betReceivedConsumer, betCalculatedConsumer)
+	betConsumer := newBetConsumer(rabbitMqChannel)
+	eventUpdateConsumer := newEventUpdateConsumer(rabbitMqChannel)
+	consumer := newConsumer(betConsumer, eventUpdateConsumer)
 
 	betMapper := newBetMapper()
 	betRepository := newBetRepository(dbExecutor, betMapper)
 	handler := newHandler(betRepository)
 
-	betCalculatedPublisher := newBetCalculatedPublisher(rabbitMqChannel)
-	publisher := newPublisher(betCalculatedPublisher)
+	betPublisher := newBetCalculatedPublisher(rabbitMqChannel)
+	publisher := newPublisher(betPublisher)
 
 	return engine.New(consumer, handler, publisher)
 }

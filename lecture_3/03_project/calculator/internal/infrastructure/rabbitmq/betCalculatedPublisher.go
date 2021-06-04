@@ -1,14 +1,12 @@
 package rabbitmq
 
 import (
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
 	"context"
 	"encoding/json"
-	"log"
-
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
-
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
+	"log"
 )
 
 // BetCalculatedPublisher publishes calculated bets into the desired RabbitMQ queue.
@@ -28,7 +26,7 @@ func NewBetCalculatedPublisher(channel Channel, config PublisherConfig) (*BetCal
 		config.DeclareArgs,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "calculated bet publisher initialization failed")
+		return nil, errors.Wrap(err, "bet calculated publisher initialization failed")
 	}
 
 	return &BetCalculatedPublisher{
@@ -38,9 +36,9 @@ func NewBetCalculatedPublisher(channel Channel, config PublisherConfig) (*BetCal
 }
 
 // Publish publishes messages until the context is cancelled.
-func (p *BetCalculatedPublisher) Publish(ctx context.Context, betsCalculated <-chan models.BetCalculated) {
+func (p *BetCalculatedPublisher) Publish(ctx context.Context, bets <-chan models.BetCalculated) {
 	go func() {
-		for betCalculated := range betsCalculated {
+		for betCalculated := range bets {
 			select {
 			case <-ctx.Done():
 				return
@@ -50,6 +48,7 @@ func (p *BetCalculatedPublisher) Publish(ctx context.Context, betsCalculated <-c
 					log.Println("Failed to marshal the following calculated bet:", betCalculated)
 					continue
 				}
+
 				err = p.channel.Publish(
 					p.config.Exchange,
 					p.config.Queue,

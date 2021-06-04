@@ -3,7 +3,7 @@ package consumer
 import (
 	"context"
 
-	rabbitmqmodels "github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
+	rabbitmqmodels "code-cadets-2021/lecture_3/03_project/calculator/internal/infrastructure/rabbitmq/models"
 )
 
 // Consumer offers methods for consuming from input queues.
@@ -20,12 +20,12 @@ func New(betConsumer BetConsumer, eventUpdateConsumer EventUpdateConsumer) *Cons
 	}
 }
 
-// ConsumeBets consumes bets queue.
+// ConsumeBets consumes bets received queue.
 func (c *Consumer) ConsumeBets(ctx context.Context) (<-chan rabbitmqmodels.Bet, error) {
 	return c.betConsumer.Consume(ctx)
 }
 
-// ConsumeEventUpdates consumes event-updates queue.
+// ConsumeEventUpdates consumes bets calculated queue.
 func (c *Consumer) ConsumeEventUpdates(ctx context.Context) (<-chan rabbitmqmodels.EventUpdate, error) {
 	return c.eventUpdateConsumer.Consume(ctx)
 }

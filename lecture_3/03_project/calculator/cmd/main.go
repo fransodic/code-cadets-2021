@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/cmd/bootstrap"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
-	"github.com/superbet-group/code-cadets-2021/lecture_3/03_project/calculator/internal/tasks"
+	"code-cadets-2021/lecture_3/03_project/calculator/cmd/bootstrap"
+	"code-cadets-2021/lecture_3/03_project/calculator/cmd/config"
+	"code-cadets-2021/lecture_3/03_project/calculator/internal/tasks"
 )
 
 func main() {
@@ -23,5 +23,5 @@ func main() {
 
 	tasks.RunTasks(signalHandler, engine)
 
-	log.Println("Service finished gracefully")
+	log.Println("Calculator service finished gracefully")
 }
