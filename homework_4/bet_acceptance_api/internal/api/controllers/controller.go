@@ -32,7 +32,7 @@ func (e *Controller) AcceptBet() gin.HandlerFunc {
 			return
 		}
 
-		if !e.betAcceptanceValidator.BetAcceptanceIsValid(betAcceptanceRequestDto) {
+		if !e.betAcceptanceValidator.BetIsValid(betAcceptanceRequestDto) {
 			ctx.String(http.StatusBadRequest, "bet acceptance request is not valid.")
 			return
 		}

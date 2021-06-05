@@ -34,7 +34,7 @@ func newController(betAcceptanceValidator controllers.BetAcceptanceValidator, be
 
 // Api bootstraps the http server.
 func Api(rabbitMqChannel *amqp.Channel) *api.WebServer {
-	betAcceptanceValidator := newBetAcceptanceValidator(10.0, 2.0, 100.0)
+	betAcceptanceValidator := newBetAcceptanceValidator(config.Cfg.BetValidator.CoefficientUpperBound, config.Cfg.BetValidator.PaymentLowerBound, config.Cfg.BetValidator.PaymentUpperBound)
 	betReceivedPublisher := newBetReceivedPublisher(rabbitMqChannel)
 	betAcceptanceService := newBetAcceptanceService(betReceivedPublisher)
 	controller := newController(betAcceptanceValidator, betAcceptanceService)
