@@ -24,6 +24,11 @@ type Bet struct {
 	Payout               float64 `json:"payout"`
 }
 
+type EventUpdateDto struct {
+	Id      string
+	Outcome string
+}
+
 func main() {
 	httpClient := stdhttp.Client{Timeout: time.Second * 10}
 
@@ -43,18 +48,33 @@ func main() {
 
 }
 
-func postEventUpdates(httpClient stdhttp.Client, eventUpdates []EventUpdateDto) error {
-	for _, eventUpdate := range eventUpdates {
-		requestBody, err := json.Marshal(eventUpdate)
-		post, err := httpClient.Post(eventUpdateEndpoint, "text/plain", bytes.NewBuffer(requestBody))
-		if err != nil {
-			return errors.Wrap(err, "error posting event update, id: "+eventUpdate.Id)
-		}
-		log.Println("Response status for event " + eventUpdate.Id + " is " + post.Status)
-		post.Body.Close()
+func getActiveOdds(httpClient stdhttp.Client) ([]Bet, error) {
+	res, err := httpClient.Get(betsAPI + activeBetsParam)
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting data from bets API")
+	}
+	defer res.Body.Close()
+
+	bodyContent, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading response body")
 	}
 
-	return nil
+	var decodedContent []Bet
+	err = json.Unmarshal(bodyContent, &decodedContent)
+	if err != nil {
+		return []Bet{}, errors.Wrap(err, "error unmarshalling response body")
+	}
+
+	return decodedContent, nil
+}
+
+func getDistinctEvents(data []Bet) map[string]struct{} {
+	events := make(map[string]struct{})
+	for _, bet := range data {
+		events[bet.SelectionId] = struct{}{}
+	}
+	return events
 }
 
 func generateRandomOutcomes(events map[string]struct{}) []EventUpdateDto {
@@ -72,35 +92,16 @@ func generateRandomOutcomes(events map[string]struct{}) []EventUpdateDto {
 	return eventUpdates
 }
 
-func getDistinctEvents(data []Bet) map[string]struct{} {
-	events := make(map[string]struct{})
-	for _, bet := range data {
-		events[bet.SelectionId] = struct{}{}
-	}
-	return events
-}
-
-func getActiveOdds(httpClient stdhttp.Client) ([]Bet, error) {
-	res, err := httpClient.Get(betsAPI + activeBetsParam)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting data from bets API")
+func postEventUpdates(httpClient stdhttp.Client, eventUpdates []EventUpdateDto) error {
+	for _, eventUpdate := range eventUpdates {
+		requestBody, err := json.Marshal(eventUpdate)
+		post, err := httpClient.Post(eventUpdateEndpoint, "text/plain", bytes.NewBuffer(requestBody))
+		if err != nil {
+			return errors.Wrap(err, "error posting event update, id: "+eventUpdate.Id)
+		}
+		log.Println("Response status for event " + eventUpdate.Id + " is " + post.Status)
+		post.Body.Close()
 	}
 
-	bodyContent, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "error reading response body")
-	}
-
-	var decodedContent []Bet
-	err = json.Unmarshal(bodyContent, &decodedContent)
-	if err != nil {
-		return []Bet{}, errors.Wrap(err, "error unmarshalling response body")
-	}
-
-	return decodedContent, nil
-}
-
-type EventUpdateDto struct {
-	Id      string
-	Outcome string
+	return nil
 }
