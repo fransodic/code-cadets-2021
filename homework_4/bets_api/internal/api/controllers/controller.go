@@ -11,12 +11,14 @@ import (
 type Controller struct {
 	BetRequestValidator BetRequestValidator
 	betService          BetService
+	betMapper           BetMapper
 }
 
-func NewController(betRequestValidator BetRequestValidator, betService BetService) *Controller {
+func NewController(betRequestValidator BetRequestValidator, betService BetService, betMapper BetMapper) *Controller {
 	return &Controller{
 		BetRequestValidator: betRequestValidator,
 		betService:          betService,
+		betMapper:           betMapper,
 	}
 }
 
@@ -33,20 +35,15 @@ func (c *Controller) GetBetByID() gin.HandlerFunc {
 		resultBet, exists, err := c.betService.GetByID(ctx, id)
 		if err != nil {
 			log.Println("Failed to fetch a bet, error: ", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
 		}
 
 		if !exists {
 			log.Println("No bets with id: ", id)
 			ctx.Status(http.StatusNotFound)
 		} else {
-			betDto := models.BetResponseDto{
-				Id:                   resultBet.Id,
-				Status:               resultBet.Status,
-				SelectionId:          resultBet.SelectionId,
-				SelectionCoefficient: resultBet.SelectionCoefficient,
-				Payment:              resultBet.Payment,
-				Payout:               resultBet.Payout,
-			}
+			betDto := c.betMapper.MapResultToDto(resultBet)
 			ctx.JSON(http.StatusOK, betDto)
 		}
 	}
@@ -73,7 +70,7 @@ func (c *Controller) GetBetsByStatus() gin.HandlerFunc {
 			log.Println("No bets with status: ", status)
 			ctx.Status(http.StatusNotFound)
 		} else {
-			betDto := mapResultsToDto(resultBets)
+			betDto := c.mapResultsToDto(resultBets)
 			ctx.JSON(http.StatusOK, betDto)
 		}
 	}
@@ -98,23 +95,16 @@ func (c *Controller) GetBetsByCustomerID() gin.HandlerFunc {
 			log.Println("No bets for user id: ", customerId)
 			ctx.Status(http.StatusNotFound)
 		} else {
-			betDto := mapResultsToDto(resultBets)
+			betDto := c.mapResultsToDto(resultBets)
 			ctx.JSON(http.StatusOK, betDto)
 		}
 	}
 }
 
-func mapResultsToDto(bets []domainmodels.Bet) []models.BetResponseDto {
+func (c *Controller) mapResultsToDto(bets []domainmodels.Bet) []models.BetResponseDto {
 	var betDto []models.BetResponseDto
 	for _, bet := range bets {
-		betDto = append(betDto, models.BetResponseDto{
-			Id:                   bet.Id,
-			Status:               bet.Status,
-			SelectionId:          bet.SelectionId,
-			SelectionCoefficient: bet.SelectionCoefficient,
-			Payment:              bet.Payment,
-			Payout:               bet.Payout,
-		})
+		betDto = append(betDto, c.betMapper.MapResultToDto(bet))
 	}
 
 	return betDto

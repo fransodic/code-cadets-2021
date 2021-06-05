@@ -1,6 +1,7 @@
 package mappers
 
 import (
+	"code-cadets-2021/homework_4/bets_api/internal/api/controllers/models"
 	domainmodels "code-cadets-2021/homework_4/bets_api/internal/domain/models"
 	storagemodels "code-cadets-2021/homework_4/bets_api/internal/infrastructure/sqlite/models"
 )
@@ -24,5 +25,16 @@ func (m *BetMapper) MapStorageBetToDomainBet(storageBet storagemodels.Bet) domai
 		SelectionCoefficient: float64(storageBet.SelectionCoefficient) / 100,
 		Payment:              float64(storageBet.Payment) / 100,
 		Payout:               float64(storageBet.Payout) / 100,
+	}
+}
+
+func (m *BetMapper) MapResultToDto(bet domainmodels.Bet) models.BetResponseDto {
+	return models.BetResponseDto{
+		Id:                   bet.Id,
+		Status:               bet.Status,
+		SelectionId:          bet.SelectionId,
+		SelectionCoefficient: bet.SelectionCoefficient,
+		Payment:              bet.Payment,
+		Payout:               bet.Payout,
 	}
 }

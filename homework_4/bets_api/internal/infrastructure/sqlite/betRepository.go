@@ -70,7 +70,7 @@ func (r *BetRepository) queryGetBetByID(ctx context.Context, id string) (storage
 		SelectionId:          selectionId,
 		SelectionCoefficient: selectionCoefficient,
 		Payment:              payment,
-		Payout:               0,
+		Payout:               payout,
 	}, nil
 }
 
@@ -131,7 +131,7 @@ func (r *BetRepository) queryGetBetsByStatus(ctx context.Context, status string)
 }
 
 // GetBetsByCustomerID fetches all bets from the database that have provided status
-// and returns them. If no bets exist exist, an error will not be returned.
+// and returns them. If no bets exist, an error will not be returned.
 func (r *BetRepository) GetBetsByCustomerID(ctx context.Context, customerId string) ([]domainmodels.Bet, error) {
 	storageBets, err := r.queryGetBetsByCustomerID(ctx, customerId)
 	if err == sql.ErrNoRows {

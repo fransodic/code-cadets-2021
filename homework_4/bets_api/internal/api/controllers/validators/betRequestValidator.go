@@ -1,8 +1,10 @@
 package validators
 
-const lostStatus = "lost"
-const wonStatus = "won"
-const activeStatus = "active"
+const (
+	lostStatus   = "lost"
+	wonStatus    = "won"
+	activeStatus = "active"
+)
 
 type BetRequestValidator struct{}
 
