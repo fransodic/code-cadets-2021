@@ -10,8 +10,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func newBetAcceptanceValidator(coeffUpperBound, paymentLowerBound, paymentUpperBound float64) *validators.BetAcceptanceValidator {
-	return validators.NewBetAcceptanceValidator(coeffUpperBound, paymentLowerBound, paymentUpperBound)
+func newBetAcceptanceValidator() *validators.BetAcceptanceValidator {
+	return validators.NewBetAcceptanceValidator(config.Cfg.BetValidator.CoefficientUpperBound, config.Cfg.BetValidator.PaymentLowerBound, config.Cfg.BetValidator.PaymentUpperBound)
 }
 
 func newBetReceivedPublisher(publisher rabbitmq.QueuePublisher) *rabbitmq.BetReceivedPublisher {
@@ -34,7 +34,7 @@ func newController(betAcceptanceValidator controllers.BetAcceptanceValidator, be
 
 // Api bootstraps the http server.
 func Api(rabbitMqChannel *amqp.Channel) *api.WebServer {
-	betAcceptanceValidator := newBetAcceptanceValidator(config.Cfg.BetValidator.CoefficientUpperBound, config.Cfg.BetValidator.PaymentLowerBound, config.Cfg.BetValidator.PaymentUpperBound)
+	betAcceptanceValidator := newBetAcceptanceValidator()
 	betReceivedPublisher := newBetReceivedPublisher(rabbitMqChannel)
 	betAcceptanceService := newBetAcceptanceService(betReceivedPublisher)
 	controller := newController(betAcceptanceValidator, betAcceptanceService)
