@@ -26,8 +26,8 @@ func newBetService(betRepository services.BetRepository) *services.BetService {
 	return services.NewBetService(betRepository)
 }
 
-func newController(betRequestValidator controllers.BetRequestValidator, betService controllers.BetService) *controllers.Controller {
-	return controllers.NewController(betRequestValidator, betService)
+func newController(betRequestValidator controllers.BetRequestValidator, betService controllers.BetService, betMapper controllers.BetMapper) *controllers.Controller {
+	return controllers.NewController(betRequestValidator, betService, betMapper)
 }
 
 // Api bootstraps the http server.
@@ -39,7 +39,7 @@ func Api(databaseExecutor sqlite.DatabaseExecutor) *api.WebServer {
 	betRepository := newBetRepository(databaseExecutor, betMapper)
 	betService := newBetService(betRepository)
 
-	controller := newController(betRequestValidator, betService)
+	controller := newController(betRequestValidator, betService, betMapper)
 
 	return api.NewServer(config.Cfg.Api.Port, config.Cfg.Api.ReadWriteTimeoutMs, controller)
 }
