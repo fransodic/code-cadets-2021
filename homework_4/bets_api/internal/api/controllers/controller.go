@@ -64,6 +64,8 @@ func (c *Controller) GetBetsByStatus() gin.HandlerFunc {
 		resultBets, err := c.betService.GetBetsByStatus(ctx, status)
 		if err != nil {
 			log.Println("Failed to fetch a bet, error: ", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
 		}
 
 		if len(resultBets) == 0 {
